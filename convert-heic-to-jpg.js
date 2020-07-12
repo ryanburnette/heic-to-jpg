@@ -22,7 +22,7 @@ walker.on('file', function (root, stat, next) {
       })
       .then(function (exists) {
         if (!exists) {
-          var cmd = `mogrify -format jpg ${stat.name}`;
+          var cmd = `mogrify -format jpg "${stat.name}"`;
           exec(
             cmd,
             {
@@ -33,22 +33,32 @@ walker.on('file', function (root, stat, next) {
                 console.error(error);
               }
               if (stdout) {
-                console.log(stdout);
+                if (process.env.LOGGING) {
+                  console.log(stdout);
+                }
               }
               if (stderr) {
-                console.error(stderr);
+                if (process.env.LOGGING) {
+                  console.error(stderr);
+                }
               }
-              console.log('CONVERT', fullpath);
+              if (process.env.LOGGING) {
+                console.log('CONVERT', fullpath);
+              }
               next();
             }
           );
         } else {
-          console.log('SKIP ALREADY CONVERTED', fullpath);
+          if (process.env.LOGGING) {
+            console.log('SKIP ALREADY CONVERTED', fullpath);
+          }
           next();
         }
       });
   } else {
-    console.log('SKIP NOT HEIC', fullpath);
+    if (process.env.LOGGING) {
+      console.log('SKIP NOT HEIC', fullpath);
+    }
     next();
   }
 });

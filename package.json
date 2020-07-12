@@ -2,7 +2,7 @@
   "name": "@ryanburnette/convert-heic-to-jpg",
   "version": "0.2.0",
   "description": "",
-- "main": "convert-heic-to-jpg.js",
+  "main": "convert-heic-to-jpg.js",
   "author": "Ryan Burnette",
   "license": "ISC",
   "dependencies": {
