@@ -1,0 +1,62 @@
+#!/bin/sh
+
+# Default directory is current directory
+DIR="${1:-.}"
+
+# Flags for options
+DELETE_ORIGINAL=0
+DRY_RUN=0
+
+# Parse command-line options
+while getopts "dr" opt; do
+  case "$opt" in
+  d) DELETE_ORIGINAL=1 ;;
+  r) DRY_RUN=1 ;;
+  *)
+    echo "Usage: $0 [-d] [-r] [directory]"
+    echo "-d: Delete original HEIC files"
+    echo "-r: Dry run (show actions without executing)"
+    exit 1
+    ;;
+  esac
+done
+
+# Shift past options to get directory argument
+shift $((OPTIND - 1))
+DIR="${1:-.}"
+
+# Check if directory exists
+if [ ! -d "$DIR" ]; then
+  echo "Error: Directory '$DIR' does not exist"
+  exit 1
+fi
+
+# Check if mogrify is installed
+if ! command -v mogrify >/dev/null 2>&1; then
+  echo "Error: mogrify (ImageMagick) is not installed"
+  exit 1
+fi
+
+# Find HEIC files and process them
+find "$DIR" -type f \( -iname "*.heic" -o -iname "*.heif" \) | while read -r file; do
+  # Get basename and target JPG path, replacing .heic/.heif with .jpg
+  basename=$(basename "$file")
+  jpgfile=$(echo "$file" | sed 's/\.[hH][eE][iI][cC]$/.jpg/i; s/\.[hH][eE][iI][fF]$/.jpg/i')
+
+  # Check if JPG already exists
+  if [ -f "$jpgfile" ]; then
+    echo "SKIP: $jpgfile already exists"
+    continue
+  fi
+
+  if [ "$DRY_RUN" -eq 1 ]; then
+    echo "Would convert: $file to $jpgfile"
+    [ "$DELETE_ORIGINAL" -eq 1 ] && echo "Would delete: $file"
+  else
+    echo "Converting: $file to $jpgfile"
+    mogrify -format jpg "$file"
+    if [ $? -eq 0 ] && [ "$DELETE_ORIGINAL" -eq 1 ]; then
+      rm -f "$file" && echo "Deleted: $file"
+    fi
+  fi
+done
